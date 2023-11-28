@@ -8,9 +8,7 @@ import {
     Toolbar,
     IconButton,
     Drawer,
-    List,
-    ListItem,
-    ListItemText,
+    List, ListItemText,
     Button,
     Table,
     TableContainer,
@@ -23,66 +21,43 @@ import {
     DialogTitle,
     DialogContent,
     TextField,
+    ListItemButton
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
 import * as postValidation from '../utils/postValidation';
 import { useFormik } from 'formik';
 import EditPostForm from './EditPostForm'; // Import the EditPostForm component
 import ViewDetailsDialog from './ViewDetailsDialog';
 import DeletePostDialog from './DeletePostDialog';
-import { Post, createPost, deletePost, getPosts, updatePost } from '../queries/postQueries';
-
-
+import { Post } from '../core/models/post.type';
+import { Nullable } from '../types/nullable.type';
+import { usePosts } from '../hooks/usePosts';
+import { useCreatePost } from '../hooks/useCreatePost';
+import { useUpdatePost } from '../hooks/useUpdatePost';
+import { useDeletePost } from '../hooks/useDeletePost';
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [isCreatePostDialogOpen, setCreatePostDialogOpen] = useState(false);
-    const queryClient = useQueryClient();
-
     const [isEditPostDialogOpen, setEditPostDialogOpen] = useState(false);
-    const [editPostId, setEditPostId] = useState<number | null>(null);
+    const [post, setPost] = useState<Nullable<Post>>(null);
+    const { data: posts } = usePosts();
+    const createPostMutation = useCreatePost();
+    const updatePostMutation = useUpdatePost();
+    const deletePostMutation = useDeletePost();
+    const [viewDetailsPost, setViewDetailsPost] = useState<Post | null>(null);
+    const [deletePostId, setDeletePostId] = useState<number | null>(null);
 
     const handleSidebarToggle = () => {
         setSidebarOpen(!isSidebarOpen);
     };
-
     const handleLogout = () => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('userId');
         navigate('/');
     };
-
-    const { data: posts } = useQuery('posts', getPosts);
-
-    const createPostMutation = useMutation(createPost, {
-        onMutate: (newPost) => {
-            // Generate a temporary id for optimistic update
-            const temporaryId = Date.now();
-
-            // Optimistically update the cache with the new post
-            queryClient.setQueryData('posts', (prev: Post[] | undefined) => {
-                return prev
-                    ? [...prev, { ...newPost, id: temporaryId }]
-                    : [{ ...newPost, id: temporaryId }];
-            });
-
-            // Return a context object that can be used in onSettled or onError
-            return { temporaryId };
-        },
-        
-		
-    });
-
-    const deletePostMutation = useMutation(deletePost, {
-        onSuccess: ({ id }) => {
-            queryClient.setQueryData('posts', (prev: Post[] | undefined) => {
-                return prev ? prev.filter((post) => post.id !== id) : [];
-            });
-        },
-    });
 
     const createPostForm = useFormik({
         initialValues: {
@@ -95,21 +70,15 @@ const Dashboard: React.FC = () => {
         },
     });
 
-    //   const [editPostId, setEditPostId] = useState<number | null>(null);
-
-    const handleEditPost = (postId: number) => {
-        setEditPostId(postId);
+    const handleEditPost = (post: Post) => {
+        setPost(post);
         setEditPostDialogOpen(true);
     };
-
-    const [viewDetailsPost, setViewDetailsPost] = useState<Post | null>(null);
 
     const handleViewDetails = (postId: number) => {
         const selectedPost = posts?.find((post) => post.id === postId);
         setViewDetailsPost(selectedPost || null);
     };
-
-    const [deletePostId, setDeletePostId] = useState<number | null>(null);
 
     const handleDeletePost = (postId: number) => {
         setDeletePostId(postId);
@@ -126,24 +95,10 @@ const Dashboard: React.FC = () => {
         setDeletePostId(null);
     };
 
-    const updatePostMutation = useMutation(updatePost, {
-        onSuccess: (data) => {
-            queryClient.setQueryData('posts', (prev: Post[] | undefined) => {
-                if (!prev) return [];
-
-                return prev.map((post) =>
-                    post.id === data.id ? { ...post, ...data } : post
-                );
-            });
-
-            setEditPostDialogOpen(false);
-        },
-    });
-
     const handleUpdatePost = (values: { title: string; body: string }) => {
-        if (editPostId) {
+        if (post) {
             updatePostMutation.mutate({
-                postId: editPostId,
+                postId: post.id,
                 updatedPost: values,
             });
         }
@@ -173,32 +128,27 @@ const Dashboard: React.FC = () => {
                 </Toolbar>
             </AppBar>
 
-            {/* Sidebar */}
             <Drawer
                 anchor="left"
                 open={isSidebarOpen}
                 onClose={handleSidebarToggle}
             >
                 <List>
-                    <ListItem button>
+                    <ListItemButton>
                         <ListItemText primary="Posts" />
-                    </ListItem>
-                    <ListItem
-                        button
+                    </ListItemButton>
+                    <ListItemButton
                         onClick={() => setCreatePostDialogOpen(true)}
                     >
                         <ListItemText primary="Create Post" />
-                    </ListItem>
-                    {/* Add more sidebar items based on your requirements */}
+                    </ListItemButton>
                 </List>
             </Drawer>
 
-            {/* Main Content */}
             <Typography variant="h4" style={{ margin: '20px 0' }}>
                 Posts
             </Typography>
 
-            {/* Table displaying each row as a single post with actions */}
             <TableContainer component={Paper} style={{ marginBottom: '20px' }}>
                 <Table>
                     <TableHead>
@@ -224,7 +174,7 @@ const Dashboard: React.FC = () => {
                                         View Details
                                     </Button>
                                     <Button
-                                        onClick={() => handleEditPost(post.id)}
+                                        onClick={() => handleEditPost(post)}
                                     >
                                         Edit
                                     </Button>
@@ -242,26 +192,20 @@ const Dashboard: React.FC = () => {
                 </Table>
             </TableContainer>
 
-            {/* Edit Post Dialog */}
             <Dialog
                 open={isEditPostDialogOpen}
                 onClose={() => setEditPostDialogOpen(false)}
             >
                 <DialogTitle>Edit Post</DialogTitle>
                 <DialogContent>
-                    {/* Render the EditPostForm component with the current editPostId */}
-                    {editPostId !== null && (
-                        <EditPostForm
-                            postId={editPostId || 0}
-                            onClose={() => setEditPostDialogOpen(false)}
-                            onUpdatePost={handleUpdatePost}
-							// post={(posts ?? []).find((post) => post.id === editPostId) || { id: 0, title: '', body: '' }}
-                        />
-                    )}
+                    <EditPostForm
+                        onClose={() => setEditPostDialogOpen(false)}
+                        onUpdatePost={handleUpdatePost}
+                        post={post}
+                    />
                 </DialogContent>
             </Dialog>
 
-            {/* Create Post Dialog */}
             <Dialog
                 open={isCreatePostDialogOpen}
                 onClose={() => setCreatePostDialogOpen(false)}

@@ -9,15 +9,14 @@ import {
     CircularProgress,
 } from '@mui/material';
 import * as Yup from 'yup';
-import { GraphQLClient } from 'graphql-request';
-import { Post } from '../queries/postQueries';
+import { graphQLClient } from '../core/api/client';
+import { Post } from '../core/models/post.type';
+import { Nullable } from '../types/nullable.type';
 
 interface EditPostFormProps {
-    postId: number;
     onClose: () => void;
-    // Add onUpdatePost prop to EditPostFormProps
     onUpdatePost: (values: { title: string; body: string }) => void;
-	post: Post;
+    post?: Nullable<Post>;
 }
 
 interface FormValues {
@@ -30,17 +29,15 @@ const validationSchema = Yup.object({
     body: Yup.string().required('Body is required'),
 });
 
-const graphQLClient = new GraphQLClient('https://graphqlzero.almansi.me/api');
 
 const EditPostForm: React.FC<EditPostFormProps> = ({
-    postId,
     onClose,
     onUpdatePost,
-	
+    post
 }) => {
     const initialValues: FormValues = {
-        title: '',
-        body: '',
+        title: post?.title || "",
+        body: post?.body || '',
     };
 
     const handleSubmit = async (values: FormValues) => {
@@ -56,7 +53,7 @@ const EditPostForm: React.FC<EditPostFormProps> = ({
       `;
 
             const variables = {
-                id: postId,
+                id: post?.id,
                 title: values.title,
                 body: values.body,
             };
@@ -64,8 +61,7 @@ const EditPostForm: React.FC<EditPostFormProps> = ({
             const data = await graphQLClient.request(mutation, variables);
 
             console.log('Updated post:', data.updatePost);
-
-            onClose(); // Close the Edit Post Dialog after successful update
+            onClose(); 
             onUpdatePost({ title: values.title, body: values.body });
         } catch (error) {
             console.error('Error updating post:', error);
