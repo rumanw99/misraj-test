@@ -8,7 +8,8 @@ import {
     Toolbar,
     IconButton,
     Drawer,
-    List, ListItemText,
+    List,
+    ListItemText,
     Button,
     Table,
     TableContainer,
@@ -17,25 +18,18 @@ import {
     TableCell,
     TableBody,
     Paper,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    TextField,
-    ListItemButton
+    ListItemButton,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
-import * as postValidation from '../utils/postValidation';
-import { useFormik } from 'formik';
-import EditPostForm from './EditPostForm'; // Import the EditPostForm component
 import ViewDetailsDialog from './ViewDetailsDialog';
 import DeletePostDialog from './DeletePostDialog';
 import { Post } from '../core/models/post.type';
 import { Nullable } from '../types/nullable.type';
 import { usePosts } from '../hooks/usePosts';
-import { useCreatePost } from '../hooks/useCreatePost';
-import { useUpdatePost } from '../hooks/useUpdatePost';
 import { useDeletePost } from '../hooks/useDeletePost';
+import EditPostDialog from './EditPostDialog';
+import CreatePostDialog from './CreatePostDialog';
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -44,8 +38,7 @@ const Dashboard: React.FC = () => {
     const [isEditPostDialogOpen, setEditPostDialogOpen] = useState(false);
     const [post, setPost] = useState<Nullable<Post>>(null);
     const { data: posts } = usePosts();
-    const createPostMutation = useCreatePost();
-    const updatePostMutation = useUpdatePost();
+
     const deletePostMutation = useDeletePost();
     const [viewDetailsPost, setViewDetailsPost] = useState<Post | null>(null);
     const [deletePostId, setDeletePostId] = useState<number | null>(null);
@@ -58,17 +51,6 @@ const Dashboard: React.FC = () => {
         localStorage.removeItem('userId');
         navigate('/');
     };
-
-    const createPostForm = useFormik({
-        initialValues: {
-            title: '',
-            body: '',
-        },
-        validationSchema: postValidation.createPostSchema,
-        onSubmit: (values) => {
-            createPostMutation.mutate(values);
-        },
-    });
 
     const handleEditPost = (post: Post) => {
         setPost(post);
@@ -93,15 +75,6 @@ const Dashboard: React.FC = () => {
 
     const handleCancelDelete = () => {
         setDeletePostId(null);
-    };
-
-    const handleUpdatePost = (values: { title: string; body: string }) => {
-        if (post) {
-            updatePostMutation.mutate({
-                postId: post.id,
-                updatedPost: values,
-            });
-        }
     };
 
     return (
@@ -191,84 +164,21 @@ const Dashboard: React.FC = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
-
-            <Dialog
+            <EditPostDialog
                 open={isEditPostDialogOpen}
                 onClose={() => setEditPostDialogOpen(false)}
-            >
-                <DialogTitle>Edit Post</DialogTitle>
-                <DialogContent>
-                    <EditPostForm
-                        onClose={() => setEditPostDialogOpen(false)}
-                        onUpdatePost={handleUpdatePost}
-                        post={post}
-                    />
-                </DialogContent>
-            </Dialog>
-
-            <Dialog
+                post={post}
+            />
+            <CreatePostDialog
                 open={isCreatePostDialogOpen}
                 onClose={() => setCreatePostDialogOpen(false)}
-            >
-                <DialogTitle>Create Post</DialogTitle>
-                <DialogContent>
-                    <form onSubmit={createPostForm.handleSubmit}>
-                        <TextField
-                            fullWidth
-                            id="title"
-                            name="title"
-                            label="Title"
-                            value={createPostForm.values.title}
-                            onChange={createPostForm.handleChange}
-                            error={
-                                createPostForm.touched.title &&
-                                Boolean(createPostForm.errors.title)
-                            }
-                            helperText={
-                                createPostForm.touched.title &&
-                                createPostForm.errors.title
-                            }
-                            margin="normal"
-                        />
-                        <TextField
-                            fullWidth
-                            id="body"
-                            name="body"
-                            label="Body"
-                            multiline
-                            rows={4}
-                            value={createPostForm.values.body}
-                            onChange={createPostForm.handleChange}
-                            error={
-                                createPostForm.touched.body &&
-                                Boolean(createPostForm.errors.body)
-                            }
-                            helperText={
-                                createPostForm.touched.body &&
-                                createPostForm.errors.body
-                            }
-                            margin="normal"
-                        />
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            color="primary"
-                        >
-                            Create
-                        </Button>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* ... (unchanged code) */}
-
+            />
             {viewDetailsPost && (
                 <ViewDetailsDialog
                     post={viewDetailsPost}
                     onClose={() => setViewDetailsPost(null)}
                 />
             )}
-
             {deletePostId && (
                 <DeletePostDialog
                     onDelete={handleConfirmDelete}

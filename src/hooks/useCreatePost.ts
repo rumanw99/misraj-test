@@ -12,13 +12,12 @@ export const useCreatePost = () => {
                 (prev) => {
                     if (prev) {
                         return {
-                            posts: { data: [...prev.posts.data, newPost] },
+                            posts: { data: [...prev.posts.data,newPost] },
                         };
                     }
                     return { posts: { data: [newPost] } };
                 }
             );
-            queryClient.invalidateQueries(['posts']);
         },
     });
 
