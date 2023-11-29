@@ -7,8 +7,8 @@ import {
     Button,
 } from '@mui/material';
 import { useFormik } from 'formik';
-import * as postValidation from '../utils/postValidation';
-import { useCreatePost } from '../hooks/useCreatePost';
+import * as postValidation from '../../../utils/postValidation';
+import { useCreatePost } from '../../../hooks/useCreatePost';
 
 interface CreatePostDialogProps {
     open: boolean;

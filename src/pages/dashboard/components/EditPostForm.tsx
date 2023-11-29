@@ -9,9 +9,9 @@ import {
     CircularProgress,
 } from '@mui/material';
 import * as Yup from 'yup';
-import { graphQLClient } from '../core/api/client';
-import { Post } from '../core/models/post.type';
-import { Nullable } from '../types/nullable.type';
+import { graphQLClient } from '../../../core/api/client';
+import { Post } from '../../../core/models/post.type';
+import { Nullable } from '../../../types/nullable.type';
 
 interface EditPostFormProps {
     onClose: () => void;

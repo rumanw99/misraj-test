@@ -9,8 +9,8 @@ import {
     Button,
 } from '@mui/material';
 import { useFormik } from 'formik';
-import { Post } from '../core/models/post.type';
-import { useUpdatePost } from '../hooks/useUpdatePost';
+import { Post } from '../../../core/models/post.type';
+import { useUpdatePost } from '../../../hooks/useUpdatePost';
 
 interface EditPostDialogProps {
     open: boolean;
