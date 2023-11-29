@@ -1,20 +1,5 @@
-// components/Dashboard.tsx
-
 import React, { useState } from 'react';
-import {
-    Typography,
-    List,
-    ListItemText,
-    Button,
-    Table,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody,
-    Paper,
-    ListItemButton,
-} from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ViewDetailsDialog from './components/ViewDetailsDialog';
 import DeletePostDialog from './components/DeletePostDialog';
@@ -25,15 +10,43 @@ import { useDeletePost } from '../../hooks/useDeletePost';
 import EditPostDialog from './components/EditPostDialog';
 import CreatePostDialog from './components/CreatePostDialog';
 import DashboardLayout from './layouts/DashboardLayout';
+import PostsTable from './components/PostsTable';
+import { Breadcrumb } from '../../types/breadcrumb.type';
+import Breadcrumbs from '../../components/Breadcrumbs';
+import { GridPaginationModel } from '@mui/x-data-grid';
+import { QueryKey } from 'react-query';
 
+const BREADCRUMBS: Breadcrumb[] = [
+    {
+        link: '',
+        text: 'Posts',
+    },
+    {
+        link: '',
+        text: 'Managements',
+    },
+];
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const [isCreatePostDialogOpen, setCreatePostDialogOpen] = useState(false);
     const [isEditPostDialogOpen, setEditPostDialogOpen] = useState(false);
     const [post, setPost] = useState<Nullable<Post>>(null);
-    const { data: posts } = usePosts();
+    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
+        {
+            page: 0,
+            pageSize: 20,
+        }
+    );
+    const queryKey: QueryKey = [
+        'posts',
+        paginationModel.page,
+        paginationModel.pageSize,
+    ];
+    const { data, isLoading } = usePosts({ paginationModel, queryKey });
+    const posts = data?.data;
+    const totalCount = data?.meta.totalCount;
 
-    const deletePostMutation = useDeletePost();
+    const deletePostMutation = useDeletePost({ queryKey });
     const [viewDetailsPost, setViewDetailsPost] = useState<Post | null>(null);
     const [deletePostId, setDeletePostId] = useState<number | null>(null);
 
@@ -62,6 +75,10 @@ const Dashboard: React.FC = () => {
         setDeletePostId(null);
     };
 
+    const handlePaginationChange = (pagination: GridPaginationModel) => {
+        setPaginationModel(pagination);
+    };
+
     React.useEffect(() => {
         const token = localStorage.getItem('accessToken');
         const userId = localStorage.getItem('userId');
@@ -72,69 +89,38 @@ const Dashboard: React.FC = () => {
 
     return (
         <DashboardLayout>
-            <List>
-                <ListItemButton>
-                    <ListItemText primary="Posts" />
-                </ListItemButton>
-                <ListItemButton onClick={() => setCreatePostDialogOpen(true)}>
-                    <ListItemText primary="Create Post" />
-                </ListItemButton>
-            </List>
-
-            <Typography variant="h4" style={{ margin: '20px 0' }}>
-                Posts
-            </Typography>
-
-            <TableContainer component={Paper} style={{ marginBottom: '20px' }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Title</TableCell>
-                            <TableCell>Body</TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {posts?.map((post) => (
-                            <TableRow key={post.id}>
-                                <TableCell>{post.id}</TableCell>
-                                <TableCell>{post.title}</TableCell>
-                                <TableCell>{post.body}</TableCell>
-                                <TableCell>
-                                    <Button
-                                        onClick={() =>
-                                            handleViewDetails(post.id)
-                                        }
-                                    >
-                                        View Details
-                                    </Button>
-                                    <Button
-                                        onClick={() => handleEditPost(post)}
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        onClick={() =>
-                                            handleDeletePost(post.id)
-                                        }
-                                    >
-                                        Delete
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                my={2}
+            >
+                <Breadcrumbs items={BREADCRUMBS} />
+                <Button onClick={() => setCreatePostDialogOpen(true)}>
+                    Create post
+                </Button>
+            </Box>
+            <PostsTable
+                isLoading={isLoading}
+                posts={posts}
+                onViewDetails={handleViewDetails}
+                onEditPost={handleEditPost}
+                onDeletePost={handleDeletePost}
+                paginationModel={paginationModel}
+                onPaginationModelChange={handlePaginationChange}
+                totalCount={totalCount || 0}
+            />
             <EditPostDialog
+                key={String(isEditPostDialogOpen)}
                 open={isEditPostDialogOpen}
                 onClose={() => setEditPostDialogOpen(false)}
                 post={post}
+                queryKey={queryKey}
             />
             <CreatePostDialog
                 open={isCreatePostDialogOpen}
                 onClose={() => setCreatePostDialogOpen(false)}
+                queryKey={queryKey}
             />
             {viewDetailsPost && (
                 <ViewDetailsDialog

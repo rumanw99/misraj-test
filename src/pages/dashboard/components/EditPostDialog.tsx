@@ -11,19 +11,22 @@ import {
 import { useFormik } from 'formik';
 import { Post } from '../../../core/models/post.type';
 import { useUpdatePost } from '../../../hooks/useUpdatePost';
+import { QueryKey } from 'react-query';
 
 interface EditPostDialogProps {
     open: boolean;
     onClose: () => void;
     post: Post | null;
+    queryKey: QueryKey;
 }
 
 const EditPostDialog: React.FC<EditPostDialogProps> = ({
     open,
     onClose,
     post,
+    queryKey,
 }) => {
-    const updatePostMutation = useUpdatePost();
+    const updatePostMutation = useUpdatePost({ queryKey });
 
     const editPostForm = useFormik({
         initialValues: {
@@ -50,7 +53,6 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({
                         {...editPostForm.getFieldProps('title')}
                         fullWidth
                         id="title"
-                        name="title"
                         label="Title"
                         margin="normal"
                     />
@@ -58,7 +60,6 @@ const EditPostDialog: React.FC<EditPostDialogProps> = ({
                         {...editPostForm.getFieldProps('body')}
                         fullWidth
                         id="body"
-                        name="body"
                         label="Body"
                         multiline
                         rows={4}

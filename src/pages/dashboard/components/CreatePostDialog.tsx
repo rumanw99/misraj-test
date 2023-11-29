@@ -9,17 +9,20 @@ import {
 import { useFormik } from 'formik';
 import * as postValidation from '../../../utils/postValidation';
 import { useCreatePost } from '../../../hooks/useCreatePost';
+import { QueryKey } from 'react-query';
 
 interface CreatePostDialogProps {
     open: boolean;
     onClose: () => void;
+    queryKey: QueryKey;
 }
 
 const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
     open,
     onClose,
+    queryKey,
 }) => {
-    const createPostMutation = useCreatePost();
+    const createPostMutation = useCreatePost({ queryKey });
     const createPostForm = useFormik({
         initialValues: {
             title: '',
@@ -28,7 +31,7 @@ const CreatePostDialog: React.FC<CreatePostDialogProps> = ({
         validationSchema: postValidation.createPostSchema,
         onSubmit: (values) => {
             createPostMutation.mutate(values);
-			onClose()
+            onClose();
         },
     });
 
