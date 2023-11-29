@@ -2,12 +2,7 @@
 
 import React, { useState } from 'react';
 import {
-    Container,
     Typography,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Drawer,
     List,
     ListItemText,
     Button,
@@ -20,7 +15,6 @@ import {
     Paper,
     ListItemButton,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate } from 'react-router-dom';
 import ViewDetailsDialog from './ViewDetailsDialog';
 import DeletePostDialog from './DeletePostDialog';
@@ -30,10 +24,10 @@ import { usePosts } from '../hooks/usePosts';
 import { useDeletePost } from '../hooks/useDeletePost';
 import EditPostDialog from './EditPostDialog';
 import CreatePostDialog from './CreatePostDialog';
+import DashboardLayout from '../pages/dashboard/layouts/DashboardLayout';
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
-    const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [isCreatePostDialogOpen, setCreatePostDialogOpen] = useState(false);
     const [isEditPostDialogOpen, setEditPostDialogOpen] = useState(false);
     const [post, setPost] = useState<Nullable<Post>>(null);
@@ -42,15 +36,6 @@ const Dashboard: React.FC = () => {
     const deletePostMutation = useDeletePost();
     const [viewDetailsPost, setViewDetailsPost] = useState<Post | null>(null);
     const [deletePostId, setDeletePostId] = useState<number | null>(null);
-
-    const handleSidebarToggle = () => {
-        setSidebarOpen(!isSidebarOpen);
-    };
-    const handleLogout = () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('userId');
-        navigate('/');
-    };
 
     const handleEditPost = (post: Post) => {
         setPost(post);
@@ -86,45 +71,15 @@ const Dashboard: React.FC = () => {
     }, [navigate]);
 
     return (
-        <Container>
-            <AppBar position="static">
-                <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        onClick={handleSidebarToggle}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    <Typography
-                        variant="h6"
-                        component="div"
-                        sx={{ flexGrow: 1 }}
-                    >
-                        Dashboard
-                    </Typography>
-                    <Button color="inherit" onClick={handleLogout}>
-                        Logout
-                    </Button>
-                </Toolbar>
-            </AppBar>
-
-            <Drawer
-                anchor="left"
-                open={isSidebarOpen}
-                onClose={handleSidebarToggle}
-            >
-                <List>
-                    <ListItemButton>
-                        <ListItemText primary="Posts" />
-                    </ListItemButton>
-                    <ListItemButton
-                        onClick={() => setCreatePostDialogOpen(true)}
-                    >
-                        <ListItemText primary="Create Post" />
-                    </ListItemButton>
-                </List>
-            </Drawer>
+        <DashboardLayout>
+            <List>
+                <ListItemButton>
+                    <ListItemText primary="Posts" />
+                </ListItemButton>
+                <ListItemButton onClick={() => setCreatePostDialogOpen(true)}>
+                    <ListItemText primary="Create Post" />
+                </ListItemButton>
+            </List>
 
             <Typography variant="h4" style={{ margin: '20px 0' }}>
                 Posts
@@ -193,7 +148,7 @@ const Dashboard: React.FC = () => {
                     onClose={handleCancelDelete}
                 />
             )}
-        </Container>
+        </DashboardLayout>
     );
 };
 
