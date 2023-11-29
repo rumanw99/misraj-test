@@ -77,6 +77,14 @@ const Dashboard: React.FC = () => {
         setDeletePostId(null);
     };
 
+    React.useEffect(() => {
+        const token = localStorage.getItem('accessToken');
+        const userId = localStorage.getItem('userId');
+        if (!token || !userId) {
+            navigate('/', { replace: true });
+        }
+    }, [navigate]);
+
     return (
         <Container>
             <AppBar position="static">

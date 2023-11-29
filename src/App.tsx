@@ -1,8 +1,9 @@
 // App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Login from './components/Login';
+import Login from './pages/login/Login';
 import Dashboard from './components/Dashboard';
+import './App.css'
 
 const App: React.FC = () => {
   return (
